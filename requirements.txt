@@ -1,0 +1,7 @@
+torch
+librosa
+fastapi
+uvicorn
+mlflow
+dvc
+pytest
