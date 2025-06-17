@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
+from tqdm.auto import tqdm
 import mlflow
 import hydra
 from omegaconf import DictConfig, OmegaConf
@@ -13,7 +14,7 @@ from src.models.unet         import UNet
 
 log = __import__('logging').getLogger(__name__)
 
-@hydra.main(config_path="../config", config_name="default")
+@hydra.main(version_base=None, config_path="../config", config_name="default")
 def main(cfg: DictConfig):
     # 1. Config dump
     log.info(f"Config:\n{OmegaConf.to_yaml(cfg)}")
@@ -38,8 +39,13 @@ def main(cfg: DictConfig):
         num_workers=cfg.data.num_workers,
     )
 
+     # how many batches per epoch
+    n_train_batches = len(train_loader)
+    n_val_batches   = len(val_loader)
+
     # 3. Model, optimizer, loss
-    device = torch.device(cfg.device if torch.cuda.is_available() else "cpu")
+    device = torch.device(cfg.device if torch.mps else "cpu")
+    log.info(f"Using device: {device}")
     model = UNet(
         in_ch=1,
         num_sources=len(cfg.data.sources)-1,  # exclude mixture
@@ -75,6 +81,11 @@ def main(cfg: DictConfig):
                 loss.backward()
                 optimizer.step()
                 train_loss += loss.item() * mix.size(0)
+                # progress log
+                if step % cfg.training.log_interval == 0 or step == n_train_batches:
+                    log.info(f"[Epoch {epoch}][Train] "
+                             f"Batch {step}/{n_train_batches}  "
+                             f"Loss: {loss.item():.4f}")
                 # early exit for smoke test
                 if cfg.training.max_steps is not None and step >= cfg.training.max_steps:
                     break
@@ -91,25 +102,35 @@ def main(cfg: DictConfig):
                     mix, target = mix.to(device), target.to(device)
                     mix = mix.unsqueeze(1)
                     pred = model(mix)
+                    batch_loss = criterion(pred, target).item()
                     val_loss += criterion(pred, target).item() * mix.size(0)
+                    # progress log
+                    if step % cfg.training.log_interval == 0 or step == n_val_batches:
+                        log.info(f"[Epoch {epoch}][Val  ] "
+                                 f"Batch {step}/{n_val_batches}  "
+                                 f"Loss: {batch_loss:.4f}")
                     if cfg.training.max_steps is not None and step >= cfg.training.max_steps:
                         break
             val_loss /= len(val_ds)
             log.info(f"[Epoch {epoch}]  Val Loss: {val_loss:.4f}")
             mlflow.log_metric("val_loss", val_loss, step=epoch)
 
-            # --- Checkpointing ---
+            # --- Checkpointing on improvement ---
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
-                ckpt_path = os.path.join(
-                    hydra.utils.get_original_cwd(),
-                    "models",
-                    f"unet_epoch{epoch}_val{val_loss:.4f}.pt"
-                )
-                os.makedirs(os.path.dirname(ckpt_path), exist_ok=True)
+                # Build checkpoint filepath under the project root
+                ckpt_dir  = hydra.utils.get_original_cwd()
+                ckpt_dir  = os.path.join(ckpt_dir, cfg.model.checkpoint_dir)
+                os.makedirs(ckpt_dir, exist_ok=True)
+                ckpt_name = f"unet_epoch{epoch}_val{val_loss:.4f}.pt"
+                ckpt_path = os.path.join(ckpt_dir, ckpt_name)
+
+                # Save model weights
                 torch.save(model.state_dict(), ckpt_path)
-                mlflow.log_artifact(ckpt_path)
-                log.info(f"Saved checkpoint: {ckpt_path}")
+                log.info(f"Saved new best checkpoint → {ckpt_path}")
+
+                # Log to MLflow so it’s versioned with your run
+                mlflow.log_artifact(ckpt_path, artifact_path="checkpoints")
 
     log.info("Training complete.")
 

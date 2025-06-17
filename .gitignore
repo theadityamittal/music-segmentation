@@ -1,5 +1,8 @@
 venv
 
+# model checkpoints
+models/checkpoints
+
 # Hydra run directories
 /outputs/
 /hydra.*

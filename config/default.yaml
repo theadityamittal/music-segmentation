@@ -1,5 +1,7 @@
 # config/default.yaml
 
+device: "mps"
+
 data:
   raw_path: data/raw
   splits: ["train", "test"]
@@ -29,6 +31,7 @@ training:
   epochs: 50
   lr: 1e-4
   max_steps: null
+  log_interval: 50    # how many batches between progress logs
 
 augment:
   # defaults for your SpectrogramTransforms
