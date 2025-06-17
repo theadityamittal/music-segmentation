@@ -1,0 +1,9 @@
+data:
+  raw_path: data/raw
+  processed_path: data/processed
+model:
+  checkpoint_dir: models/checkpoints
+training:
+  epochs: 50
+  batch_size: 16
+  lr: 1e-4
