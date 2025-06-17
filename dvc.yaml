@@ -1,0 +1,11 @@
+stages:
+  preprocess:
+    cmd: python -m src.data.preprocess
+    deps:
+      - src/data/preprocess.py
+      - config/default.yaml      # if you want config changes to trigger re-run
+      - data/raw/train.h5.dvc    # DVC will pull raw before running
+      - data/raw/test.h5.dvc
+    outs:
+      - data/processed/train.h5
+      - data/processed/test.h5
