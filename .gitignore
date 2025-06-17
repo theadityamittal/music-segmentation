@@ -1,2 +1,14 @@
 venv
-data/processed
+
+# Hydra run directories
+/outputs/
+/hydra.*
+
+# MLflow runs
+/mlruns/
+
+# Logs and temporary files
+*.log
+*.npz
+__pycache__/
+*.py[cod]
