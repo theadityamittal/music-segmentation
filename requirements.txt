@@ -5,3 +5,8 @@ uvicorn
 mlflow
 dvc
 pytest
+dvc-s3
+h5py
+omegaconf
+hydra-core
+torchvision
