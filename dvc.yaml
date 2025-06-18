@@ -9,3 +9,13 @@ stages:
     outs:
       - data/processed/train.h5
       - data/processed/test.h5
+  train:
+    cmd: python -m src.train
+    deps:
+      - src/models/unet.py
+      - src/train.py
+      - config/default.yaml
+      - data/processed/train.h5
+      - data/processed/test.h5
+    outs:
+      - models/checkpoints
