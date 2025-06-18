@@ -1,21 +1,41 @@
+# DVC pipeline configuration file
 stages:
   preprocess:
     cmd: python -m src.data.preprocess
     deps:
-      - src/data/preprocess.py
-      - config/default.yaml      # if you want config changes to trigger re-run
-      - data/raw/train.h5.dvc    # DVC will pull raw before running
-      - data/raw/test.h5.dvc
+    - src/data/loader.py
+    - src/data/preprocess.py
+    - src/data/preprocess_utils.py
+    - config/default.yaml
+    - data/raw/train.zip
+    - data/raw/test.zip
     outs:
-      - data/processed/train.h5
-      - data/processed/test.h5
+    - data/processed/train.h5
+    - data/processed/test.h5
+
   train:
-    cmd: python -m src.train
+    cmd: python -m src.train 
     deps:
-      - src/models/unet.py
-      - src/train.py
-      - config/default.yaml
-      - data/processed/train.h5
-      - data/processed/test.h5
+    - src/train.py
+    - config/default.yaml
+    - data/processed/train.h5
     outs:
-      - models/checkpoints
+    - models/checkpoints
+
+  evaluate:
+    cmd: >-
+      python -m src.evaluate 
+      --checkpoint models/unet_best.pt 
+      --config config/default.yaml 
+      --output results/eval.csv 
+      --out-dir results/separated
+    deps:
+    - src/evaluate.py
+    - config/default.yaml
+    - models/unet_best.pt
+    - data/processed/test.h5
+    outs:
+    - results/separated
+    metrics:
+    - results/eval.csv
+

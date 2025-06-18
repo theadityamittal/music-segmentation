@@ -14,4 +14,6 @@ models/checkpoints
 *.log
 *.npz
 __pycache__/
-*.py[cod]
+*.py[cod]data/processed/*.h5
+models/unet_best.pt
+results/eval.csv

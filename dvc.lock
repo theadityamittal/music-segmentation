@@ -1,0 +1,69 @@
+schema: '2.0'
+stages:
+  preprocess:
+    cmd: python -m src.data.preprocess
+    deps:
+    - path: config/default.yaml
+      hash: md5
+      md5: bb7a34dd94222d6f18332707c4b87123
+      size: 920
+    - path: data/raw/test.zip
+      hash: md5
+      md5: a8d4995ec22d81a2887ac79054cab030
+      size: 1596914600
+    - path: data/raw/train.zip
+      hash: md5
+      md5: a023b23143ab97ca72f3bf42364d7b70
+      size: 3091345611
+    - path: src/data/loader.py
+      hash: md5
+      md5: 0ceb6927d44d616b6acdee88dd3be962
+      size: 4140
+    - path: src/data/preprocess.py
+      hash: md5
+      md5: b732d58a040f0822b4ed77c7978fb9ec
+      size: 2705
+    - path: src/data/preprocess_utils.py
+      hash: md5
+      md5: b0d95868c6d3345e3d2261f450437bc7
+      size: 1092
+    outs:
+    - path: data/processed/test.h5
+      hash: md5
+      md5: 181d129a014afa50b4c94476447142c3
+      size: 1574495961
+    - path: data/processed/train.h5
+      hash: md5
+      md5: 26215e0546735423d459227dc99949b4
+      size: 2971501979
+  evaluate:
+    cmd: python -m src.evaluate  --checkpoint models/unet_best.pt  --config 
+      config/default.yaml  --output results/eval.csv  --out-dir 
+      results/separated
+    deps:
+    - path: config/default.yaml
+      hash: md5
+      md5: bb7a34dd94222d6f18332707c4b87123
+      size: 920
+    - path: data/processed/test.h5
+      hash: md5
+      md5: 181d129a014afa50b4c94476447142c3
+      size: 1574495961
+    - path: models/unet_best.pt
+      hash: md5
+      md5: a034185b912d39b2a0f81398da197b27
+      size: 31133505
+    - path: src/evaluate.py
+      hash: md5
+      md5: 422a3cfa601e454cdadd867e8641ca5b
+      size: 4832
+    outs:
+    - path: results/eval.csv
+      hash: md5
+      md5: c8369a38f5d8c8fbce5da0d70f0bf719
+      size: 4204
+    - path: results/separated
+      hash: md5
+      md5: 5a3eed2010009c754ceed25774d480a0.dir
+      size: 1594974816
+      nfiles: 200
