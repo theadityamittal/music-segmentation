@@ -13,15 +13,6 @@ stages:
     - data/processed/train.h5
     - data/processed/test.h5
 
-  train:
-    cmd: python -m src.train 
-    deps:
-    - src/train.py
-    - config/default.yaml
-    - data/processed/train.h5
-    outs:
-    - models/checkpoints
-
   evaluate:
     cmd: >-
       python -m src.evaluate 
